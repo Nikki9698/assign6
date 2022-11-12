@@ -1,12 +1,14 @@
-  'use strict';
+'use strict';
 
   // Global variables that are set and used
   // across the application
   let gl, program;
   
   // Global declarations of objects that you will be drawing
-  var myTeapot = null;
-
+var myTeapot = null;
+var myCube = null;
+var myCylinder = null
+var myCone=null
 
 //
 // A function that creates shapes to be drawn and creates a VAO for each
@@ -16,7 +18,16 @@
 function createShapes() {
 
     myTeapot = new Teapot();
-    myTeapot.VAO = bindVAO (myTeapot);
+  // since my sphere was not forming properly I am going with cube
+  myCube = new Cube(4);
+  myCylinder = new Cylinder(40, 4);
+
+  myCone= new Cone(40,4)
+  myTeapot.VAO = bindVAO(myTeapot);
+  myCube.VAO = bindVAO(myCube);
+  myCylinder.VAO = bindVAO(myCylinder);
+  myCone.VAO=bindVAO(myCone)
+
 }
 
 
@@ -25,17 +36,21 @@ function createShapes() {
 //
 function setUpCamera() {
     
-    // set up your projection
-    // defualt is orthographic projection
-    let projMatrix = glMatrix.mat4.create();
-    glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
+  //   set up your projection
+  //   defualt is orthographic projection
+  let projMatrix = glMatrix.mat4.create();
+  
+  
+    glMatrix.mat4.perspective(projMatrix,radians(75),1,0,null);
+  
+      
     gl.uniformMatrix4fv (program.uProjT, false, projMatrix);
 
     
     // set up your view
     // defaut is at (0,0,-5) looking at the origin
     let viewMatrix = glMatrix.mat4.create();
-    glMatrix.mat4.lookAt(viewMatrix, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
+    glMatrix.mat4.lookAt(viewMatrix, [0,4, -9], [0,0, 0], [0, 1, 0]);
     gl.uniformMatrix4fv (program.uViewT, false, viewMatrix);
 }
 
@@ -49,18 +64,90 @@ function setUpCamera() {
 // An example is shown for placing the teapot
 //
 function drawShapes() {
+
+  //Pedestal
+
+  for (var pedestalOffset = -2; pedestalOffset < 3; pedestalOffset = pedestalOffset + 2) {
+    let cubeMatrix = glMatrix.mat4.create();
+    glMatrix.mat4.scale(cubeMatrix, cubeMatrix, [2, 0.5, 3])
+
+    glMatrix.mat4.translate(cubeMatrix, cubeMatrix, [pedestalOffset, -5, 0])
+    gl.uniformMatrix4fv(program.uModelT, false, cubeMatrix);
+    gl.bindVertexArray(myCube.VAO);
+    gl.drawElements(gl.TRIANGLES, myCube.indices.length, gl.UNSIGNED_SHORT, 0);
+
+
+    //pillar
+    let cylinderMatrix = glMatrix.mat4.create();
+    glMatrix.mat4.translate(cylinderMatrix, cylinderMatrix, [pedestalOffset*2, -1.5, 0])
+    glMatrix.mat4.scale(cylinderMatrix, cylinderMatrix, [1.2, 2, 1])
+    gl.uniformMatrix4fv(program.uModelT, false, cylinderMatrix);
+    gl.bindVertexArray(myCylinder.VAO);
+    gl.drawElements(gl.TRIANGLES, myCylinder.indices.length, gl.UNSIGNED_SHORT, 0);
+
+
+
+
+    glMatrix.mat4.translate(cubeMatrix, cubeMatrix, [0, 5, 0])
+    gl.uniformMatrix4fv(program.uModelT, false, cubeMatrix);
+    gl.bindVertexArray(myCube.VAO);
+    gl.drawElements(gl.TRIANGLES, myCube.indices.length, gl.UNSIGNED_SHORT, 0);
+
+
+  }
+  for (var offset = -1; offset < 2; offset++) {
+
+    if (offset != 0 ) {
+      //TEAPOT
+      let modelMatrix = glMatrix.mat4.create();
+  
+      // drawing the teapot rotating around Y  180 degrees
+      glMatrix.mat4.rotateY(modelMatrix, modelMatrix, radians(180.0))
+      glMatrix.mat4.scale(modelMatrix, modelMatrix, [0.75, 0.75, 0.75])
+      glMatrix.mat4.translate(modelMatrix, modelMatrix, [ 0, 0, -0.2])
+  
+  
+      // send the model matrix to the shader and draw.
+      gl.uniformMatrix4fv(program.uModelT, false, modelMatrix);
+      gl.bindVertexArray(myTeapot.VAO);
+      gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
+    }
+  }
+
+
+  for (var offset = -2; offset < 3; offset++) {
+
     
-    
+    //Cube
+    if (offset != 0) {
+      let modelMatrix = glMatrix.mat4.create();
+      glMatrix.mat4.rotateY(modelMatrix, modelMatrix, radians(180.0))
+      glMatrix.mat4.scale(modelMatrix, modelMatrix, [2.0, 2.0, 2.0])
+      glMatrix.mat4.translate(modelMatrix, modelMatrix, [-2.62, 0, -1.5])
+  
+  
+      // send the model matrix to the shader and draw.
+      gl.uniformMatrix4fv(program.uModelT, false, modelMatrix);
+      gl.bindVertexArray(myCube.VAO);
+      gl.drawElements(gl.TRIANGLES, myCube.indices.length, gl.UNSIGNED_SHORT, 0);
+    }
+  }
+
+
+
+    //Cone
     let modelMatrix = glMatrix.mat4.create();
-    
-    // drawing the teapot rotating around Y  180 degrees
-    glMatrix.mat4.rotateY (modelMatrix,  modelMatrix, radians(180.0))
-    
+    glMatrix.mat4.rotateY(modelMatrix, modelMatrix, radians(180.0))
+    glMatrix.mat4.scale(modelMatrix, modelMatrix, [2.0, 2.0, 2.0])
+    glMatrix.mat4.translate(modelMatrix, modelMatrix, [2.62, 0, -1.5])
+  
+  
     // send the model matrix to the shader and draw.
-    gl.uniformMatrix4fv (program.uModelT, false, modelMatrix);
-    gl.bindVertexArray(myTeapot.VAO);
-    gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
-    
+    gl.uniformMatrix4fv(program.uModelT, false, modelMatrix);
+    gl.bindVertexArray(myCone.VAO);
+    gl.drawElements(gl.TRIANGLES, myCone.indices.length, gl.UNSIGNED_SHORT, 0);
+  
+  
 }
 
 ///////////////////////////////////////////////////////////////////
